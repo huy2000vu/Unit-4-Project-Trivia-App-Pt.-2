@@ -22,12 +22,71 @@ class TriviaViewController: UIViewController {
   private var currQuestionIndex = 0
   private var numCorrectQuestions = 0
   
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    addGradient()
-    questionContainerView.layer.cornerRadius = 8.0
-    // TODO: FETCH TRIVIA QUESTIONS HERE
-  }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        addGradient()
+        questionContainerView.layer.cornerRadius = 8.0
+        // TODO: FETCH TRIVIA QUESTIONS HERE
+        fetchQuestion()
+        
+    }
+    private func fetchQuestion(){
+        TriviaQuestionService.fetchQuestion { [weak self] questions in
+            self?.questions = questions
+            // Update UI with the first question
+            if let firstQuestion = questions.first {
+                self?.configure(with: firstQuestion)
+            }
+        }
+    }
+   
+    private func configure(with question: TriviaQuestion)
+    {
+        print(question.type )
+        if let decodedQuestionText = question.question.htmlDecoded {
+              questionLabel.text = decodedQuestionText
+          } else {
+              questionLabel.text = question.question
+          }
+        categoryLabel.text = question.category
+        
+        //hide all buttons
+        answerButton0.isHidden = true
+        answerButton1.isHidden = true
+        answerButton2.isHidden = true
+        answerButton3.isHidden = true
+        if question.type.lowercased() == "boolean"
+        {
+            answerButton0.setTitle("True", for: .normal)
+            answerButton1.setTitle("False", for: .normal)
+            answerButton2.isHidden = false
+            answerButton3.isHidden = false
+        }
+        else{
+            let answers = ([question.correctAnswer] + question.incorrectAnswers).shuffled()
+            for (index, answer) in answers.enumerated() {
+                guard index < 4 else {
+                    break
+                }
+                switch index {
+                case 0:
+                    answerButton0.setTitle(answer, for: .normal)
+                    answerButton0.isHidden = false
+                case 1:
+                    answerButton1.setTitle(answer, for: .normal)
+                    answerButton1.isHidden = false
+                case 2:
+                    answerButton2.setTitle(answer, for: .normal)
+                    answerButton2.isHidden = false
+                case 3:
+                    answerButton3.setTitle(answer, for: .normal)
+                    answerButton3.isHidden = false
+                default:
+                    break
+                }
+            }
+        }
+    }
   
   private func updateQuestion(withQuestionIndex questionIndex: Int) {
     currentQuestionNumberLabel.text = "Question: \(questionIndex + 1)/\(questions.count)"
@@ -76,9 +135,12 @@ class TriviaViewController: UIViewController {
       currQuestionIndex = 0
       numCorrectQuestions = 0
       updateQuestion(withQuestionIndex: currQuestionIndex)
+        fetchQuestion()
     }
     alertController.addAction(resetAction)
     present(alertController, animated: true, completion: nil)
+      //fetch new questions
+      
   }
   
   private func addGradient() {
@@ -106,5 +168,6 @@ class TriviaViewController: UIViewController {
   @IBAction func didTapAnswerButton3(_ sender: UIButton) {
     updateToNextQuestion(answer: sender.titleLabel?.text ?? "")
   }
+
 }
 
