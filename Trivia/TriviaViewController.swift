@@ -42,7 +42,7 @@ class TriviaViewController: UIViewController {
    
     private func configure(with question: TriviaQuestion)
     {
-        print(question.type )
+        print(question.type)
         if let decodedQuestionText = question.question.htmlDecoded {
               questionLabel.text = decodedQuestionText
           } else {
@@ -88,28 +88,45 @@ class TriviaViewController: UIViewController {
         }
     }
   
-  private func updateQuestion(withQuestionIndex questionIndex: Int) {
-    currentQuestionNumberLabel.text = "Question: \(questionIndex + 1)/\(questions.count)"
-    let question = questions[questionIndex]
-    questionLabel.text = question.question
-    categoryLabel.text = question.category
-    let answers = ([question.correctAnswer] + question.incorrectAnswers).shuffled()
-    if answers.count > 0 {
-      answerButton0.setTitle(answers[0], for: .normal)
+    private func updateQuestion(withQuestionIndex questionIndex: Int) {
+        // Update current question number UI
+        currentQuestionNumberLabel.text = "Question: \(questionIndex + 1)/\(questions.count)"
+        
+        // Get the current question
+        let question = questions[questionIndex]
+        
+        // Update question and category labels
+        if let decodedQuestionText = question.question.htmlDecoded {
+            questionLabel.text = decodedQuestionText
+        } else {
+            questionLabel.text = question.question
+        }
+        categoryLabel.text = question.category
+        
+        // Reset button visibility
+        answerButton0.isHidden = true
+        answerButton1.isHidden = true
+        answerButton2.isHidden = true
+        answerButton3.isHidden = true
+        
+        // Check question type and update UI accordingly
+        if question.type.lowercased() == "boolean" {
+            // For boolean questions, show only two buttons
+            answerButton0.setTitle("True", for: .normal)
+            answerButton0.isHidden = false
+            answerButton1.setTitle("False", for: .normal)
+            answerButton1.isHidden = false
+        } else {
+            // For multiple-choice questions, show all answer options
+            let answers = ([question.correctAnswer] + question.incorrectAnswers).shuffled()
+            for (index, answer) in answers.enumerated() {
+                guard index < 4 else { break }
+                let button = [answerButton0, answerButton1, answerButton2, answerButton3][index]
+                button?.setTitle(answer, for: .normal)
+                button?.isHidden = false
+            }
+        }
     }
-    if answers.count > 1 {
-      answerButton1.setTitle(answers[1], for: .normal)
-      answerButton1.isHidden = false
-    }
-    if answers.count > 2 {
-      answerButton2.setTitle(answers[2], for: .normal)
-      answerButton2.isHidden = false
-    }
-    if answers.count > 3 {
-      answerButton3.setTitle(answers[3], for: .normal)
-      answerButton3.isHidden = false
-    }
-  }
   
   private func updateToNextQuestion(answer: String) {
     if isCorrectAnswer(answer) {
